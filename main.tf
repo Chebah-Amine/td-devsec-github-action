@@ -31,7 +31,7 @@ resource "tls_private_key" "ssh" {
 resource "azurerm_virtual_network" "vnet" {
   name                = "vnet-td-github"
   address_space       = ["10.0.0.0/16"]
-  location            = data.azurerm_resource_group.rg.location
+  location            = var.location
   resource_group_name = data.azurerm_resource_group.rg.name
 }
 
@@ -44,15 +44,16 @@ resource "azurerm_subnet" "subnet" {
 
 resource "azurerm_public_ip" "pip" {
   name                = "pip-td-github"
-  location            = data.azurerm_resource_group.rg.location
+  location            = var.location
   resource_group_name = data.azurerm_resource_group.rg.name
   allocation_method   = "Static"
   sku                 = "Standard"
+  zones               = ["2"]
 }
 
 resource "azurerm_network_interface" "nic" {
   name                = "nic-td-github"
-  location            = data.azurerm_resource_group.rg.location
+  location            = var.location
   resource_group_name = data.azurerm_resource_group.rg.name
 
   ip_configuration {
@@ -65,9 +66,10 @@ resource "azurerm_network_interface" "nic" {
 
 resource "azurerm_linux_virtual_machine" "vm" {
   name                  = "vm-td-github"
-  location              = data.azurerm_resource_group.rg.location
+  location              = var.location
   resource_group_name   = data.azurerm_resource_group.rg.name
-  size                  = "Standard_B2s"
+  size                  = var.vm_size
+  zone                  = "2"
   admin_username        = "azureuser"
   network_interface_ids = [azurerm_network_interface.nic.id]
 
@@ -91,4 +93,14 @@ resource "azurerm_linux_virtual_machine" "vm" {
 
 output "public_ip" {
   value = azurerm_public_ip.pip.ip_address
+}
+
+variable "location" {
+  type    = string
+  default = "denmarkeast"
+}
+
+variable "vm_size" {
+  type    = string
+  default = "Standard_B2s"
 }
